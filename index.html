@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEON MUSIC STUDIO</title>
+<style>
+*{box-sizing:border-box}
+:root{--gold:#ffe500;--white:#fff}
+body{
+ margin:0;background:#030405;color:white;
+ font-family:Arial,sans-serif;overflow-x:hidden
+}
+button,input{font:inherit}
+button{
+ border:0;border-radius:12px;padding:12px 16px;
+ cursor:pointer;color:#050505;background:var(--gold);
+ font-weight:bold
+}
+button:active{transform:scale(.97)}
+.app{max-width:1100px;margin:auto;padding:16px}
+h1{text-align:center;font-size:clamp(25px,5vw,42px);
+ letter-spacing:3px;margin:16px 0 8px}
+.sub{text-align:center;color:#aaa;font-size:13px;margin-bottom:24px}
+.preview{
+ position:relative;width:100%;aspect-ratio:16/9;
+ background:#08090b;border-radius:18px;overflow:hidden;
+ border:1px solid #474747;isolation:isolate;
+ box-shadow:0 0 35px #ffffff12;
+}
+#backdrop{
+ position:absolute;inset:-10%;width:120%;height:120%;
+ object-fit:cover;filter:blur(18px) brightness(.23) saturate(1.5);
+ transform:scale(1.1);z-index:-3
+}
+.shade{
+ position:absolute;inset:0;z-index:-2;
+ background:linear-gradient(120deg,#050505d9,#11111180,#000d)
+}
+.ambient{
+ position:absolute;width:60%;height:50%;left:20%;top:35%;
+ background:#ffe50020;filter:blur(55px);border-radius:50%;
+ animation:glow 3s infinite alternate;z-index:-1
+}
+@keyframes glow{
+ from{opacity:.3;transform:scale(.8)}
+ to{opacity:1;transform:scale(1.2)}
+}
+.player{
+ position:absolute;left:9%;top:17%;width:82%;height:66%;
+ border:1px solid #fff;border-radius:20px;
+ background:linear-gradient(125deg,#161616cc,#030303e8);
+ box-shadow:0 0 8px #fff8,inset 0 0 20px #fff1;
+ transform:perspective(900px) rotateY(-5deg) rotateX(1deg);
+ overflow:hidden;padding:3.5%;
+}
+.player:before{
+ content:"";position:absolute;inset:0;border-radius:20px;
+ border:1px solid #ffffff35;pointer-events:none
+}
+.status{
+ display:flex;justify-content:space-between;
+ font-size:clamp(8px,1.2vw,12px);color:#ddd;
+ margin-bottom:5%
+}
+.status b{color:var(--gold)}
+.content{
+ display:grid;grid-template-columns:43% 1fr;
+ gap:5%;height:62%;align-items:center
+}
+.cover{
+ width:100%;aspect-ratio:1;object-fit:cover;
+ border-radius:9px;background:#171717;
+ box-shadow:0 0 15px #fff2
+}
+.details{min-width:0}
+.song{
+ color:var(--gold);font-size:clamp(12px,2.2vw,23px);
+ font-weight:bold;overflow-wrap:anywhere;margin:0 0 8px
+}
+.artist{color:#ddd;font-size:clamp(9px,1.4vw,14px)}
+.copyright{font-size:clamp(8px,1.2vw,12px);
+ color:#aaa;margin-top:8px;overflow-wrap:anywhere}
+.progress{
+ width:100%;height:3px;background:#ffffff40;
+ margin-top:14px;border-radius:10px;overflow:hidden
+}
+#bar{width:0;height:100%;background:var(--gold)}
+.times{display:flex;justify-content:space-between;
+ color:#bbb;font-size:10px;margin-top:5px}
+.controls{
+ display:flex;align-items:center;justify-content:center;
+ gap:clamp(8px,2vw,22px);margin-top:13px
+}
+.controls button{
+ background:transparent;color:white;padding:4px;
+ font-size:clamp(13px,2vw,21px)
+}
+.controls .mainplay{
+ background:var(--gold);color:#111;border-radius:50%;
+ width:36px;height:36px;padding:0
+}
+#visualizer{
+ width:100%;height:23%;position:absolute;bottom:1%;
+ left:0
+}
+.beam{
+ position:absolute;top:-40%;left:-30%;width:25%;height:180%;
+ background:linear-gradient(90deg,transparent,#ffffff30,transparent);
+ transform:rotate(25deg);animation:beam 7s linear infinite;
+ pointer-events:none
+}
+@keyframes beam{to{left:130%}}
+.watermark{
+ position:absolute;right:2%;bottom:2%;
+ font-size:10px;color:#ffffffa0
+}
+.panel{
+ background:#101114;border:1px solid #292a30;
+ border-radius:16px;padding:18px;margin-top:18px
+}
+.panel h2{font-size:17px;margin:0 0 15px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.field label{font-size:12px;color:#c5c5c5}
+input[type=text],input[type=color]{
+ width:100%;min-height:43px;border-radius:9px;
+ border:1px solid #393a40;background:#090a0c;color:white;
+ padding:10px
+}
+input[type=file]{
+ width:100%;font-size:12px;color:#ccc;
+ background:#090a0c;border:1px solid #393a40;
+ padding:10px;border-radius:9px
+}
+input[type=color]{padding:4px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}
+.actions button{flex:1;min-width:130px}
+.secondary{background:#292b31;color:white}
+.hint{font-size:12px;color:#aaa;line-height:1.7}
+footer{text-align:center;color:#666;font-size:11px;padding:22px}
+@media(max-width:500px){
+ .app{padding:10px}
+ .panel{padding:13px}
+ .grid{grid-template-columns:1fr}
+ .player{left:5%;width:90%;top:15%;height:70%;padding:4%}
+ .content{grid-template-columns:38% 1fr;gap:5%}
+ .song{font-size:12px}
+ .copyright{font-size:8px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+ <h1>NEON MUSIC</h1>
+ <div class="sub">MUSIC VISUALIZER • CREATE YOUR OWN VIDEO</div>
+
+ <div class="preview" id="preview">
+  <img id="backdrop" alt="">
+  <div class="shade"></div>
+  <div class="ambient" id="ambient"></div>
+
+  <div class="player">
+   <div class="beam"></div>
+   <div class="status">
+    <span id="clock">12:00 ◉ ♫</span>
+    <b>♫ MUSIC PLAYER</b>
+   </div>
+
+   <div class="content">
+    <img id="cover" class="cover" alt="Ảnh bìa">
+    <div class="details">
+     <p class="song" id="songText">WEAR HEADPHONES</p>
+     <div class="artist" id="artistText">VT Music ✦</div>
+     <div class="copyright" id="copyText">THIS (SONG)</div>
+     <div class="progress"><div id="bar"></div></div>
+     <div class="times">
+      <span id="current">0:00</span>
+      <span id="duration">0:00</span>
+     </div>
+    </div>
+   </div>
+
+   <div class="controls">
+    <button id="restart" title="Phát lại">↺</button>
+    <button id="back" title="Lùi 10 giây">◂</button>
+    <button class="mainplay" id="play" title="Phát hoặc dừng">▶</button>
+    <button id="forward" title="Tiến 10 giây">▸</button>
+    <button id="mute" title="Tắt mở âm thanh">♫</button>
+   </div>
+   <canvas id="visualizer"></canvas>
+  </div>
+  <div class="watermark" id="watermark">@YOUR_CHANNEL</div>
+ </div>
+
+ <div class="panel">
+  <h2>🎨 01 — Tùy chỉnh giao diện</h2>
+  <div class="grid">
+   <div class="field">
+    <label>Ảnh bìa</label>
+    <input id="imageInput" type="file" accept="image/*">
+   </div>
+   <div class="field">
+    <label>File nhạc hoặc video (MP3, MP4...)</label>
+    <input id="mediaInput" type="file"
+     accept="audio/*,video/mp4,video/webm,video/ogg">
+   </div>
+   <div class="field">
+    <label>Tên bài hát</label>
+    <input id="songInput" type="text" value="WEAR HEADPHONES">
+   </div>
+   <div class="field">
+    <label>Tên ca sĩ / người đăng</label>
+    <input id="artistInput" type="text" value="VT Music ✦">
+   </div>
+   <div class="field">
+    <label>Thông tin bản quyền / tên bản nhạc</label>
+    <input id="copyInput" type="text" value="THIS (SONG)">
+   </div>
+   <div class="field">
+    <label>Tên kênh / watermark</label>
+    <input id="channelInput" type="text" value="@YOUR_CHANNEL">
+   </div>
+   <div class="field">
+    <label>Màu neon chủ đạo</label>
+    <input id="colorInput" type="color" value="#ffe500">
+   </div>
+  </div>
+  <div class="actions">
+   <button id="apply">✨ Áp dụng giao diện</button>
+   <button id="reset" class="secondary">↺ Đặt lại</button>
+  </div>
+  <p class="hint">Ảnh, nhạc và video được đọc trực tiếp từ thiết bị của bạn. Hãy chọn file của chính bạn hoặc file được phép sử dụng.</p>
+ </div>
+
+ <div class="panel">
+  <h2>🎬 02 — Xuất video về máy</h2>
+  <div class="actions">
+   <button id="record">● Bắt đầu quay video</button>
+   <button id="stop" class="secondary" disabled>■ Dừng và lưu video</button>
+  </div>
+  <p class="hint" id="exportStatus">
+   Video xuất sẽ ghi lại hình ảnh trên khung xem trước và âm thanh đang phát. Định dạng xuất phụ thuộc vào trình duyệt, thường là WebM. Không phải trình duyệt nào cũng hỗ trợ ghi âm thanh hệ thống.
+  </p>
+ </div>
+</div>
+<footer>NEON MUSIC STUDIO • PERSONAL MUSIC VISUALIZER</footer>
+
+<audio id="audio" crossorigin="anonymous"></audio>
+<video id="videoSource" playsinline crossorigin="anonymous"
+ style="display:none"></video>
+
+<script>
+const $=id=>document.getElementById(id);
+const canvas=$("visualizer");
+const ctx=canvas.getContext("2d");
+const audio=$("audio");
+const video=$("videoSource");
+
+let mediaURL="", imageURL="";
+let sourceType="audio";
+let audioContext=null, analyser=null, mediaSource=null;
+let recording=null, chunks=[], recordingStream=null;
+let playing=false, muted=false;
+
+const fallbackSVG=`<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500">
+<defs><linearGradient id="g" x2="1" y2="1">
+<stop stop-color="#30333d"/><stop offset="1" stop-color="#050506"/>
+</linearGradient></defs>
+<rect width="100%" height="100%" fill="url(#g)"/>
+<text x="50%" y="46%" text-anchor="middle" fill="#ffe500" font-size="100">♫</text>
+<text x="50%" y="65%" text-anchor="middle" fill="white" font-size="28">YOUR MUSIC</text>
+</svg>`;
+const fallbackURL="data:image/svg+xml;charset=utf-8,"+
+ encodeURIComponent(fallbackSVG);
+
+function formatTime(t){
+ if(!Number.isFinite(t))return "0:00";
+ return Math.floor(t/60)+":"+String(Math.floor(t%60)).padStart(2,"0");
+}
+function activeMedia(){return sourceType==="video"?video:audio}
+function getDuration(){return activeMedia().duration||0}
+function getTime(){return activeMedia().currentTime||0}
+
+function resizeCanvas(){
+ const r=canvas.getBoundingClientRect();
+ const dpr=Math.min(devicePixelRatio||1,2);
+ canvas.width=Math.max(1,Math.floor(r.width*dpr));
+ canvas.height=Math.max(1,Math.floor(r.height*dpr));
+}
+new ResizeObserver(resizeCanvas).observe(canvas);
+resizeCanvas();
+
+function draw(){
+ requestAnimationFrame(draw);
+ const w=canvas.width,h=canvas.height;
+ ctx.clearRect(0,0,w,h);
+ const count=64;
+ let data=null;
+ if(analyser){
+  data=new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(data);
+ }
+ const gap=w/count, base=h*.92;
+ for(let i=0;i<count;i++){
+  const val=data?data[Math.floor(i*data.length/count)]/255:
+    (.12+.10*Math.sin(Date.now()/400+i*.5));
+  const bh=Math.max(2,h*(.12+val*.72));
+  const grad=ctx.createLinearGradient(0,base-bh,0,base);
+  grad.addColorStop(0,"#ffffff");
+  grad.addColorStop(.6,getComputedStyle(document.documentElement)
+   .getPropertyValue("--gold").trim());
+  grad.addColorStop(1,"#ffffff30");
+  ctx.fillStyle=grad;
+  ctx.beginPath();
+  ctx.roundRect(i*gap+gap*.22,base-bh,gap*.55,bh,3);
+  ctx.fill();
+ }
+ $("bar").style.width=(getDuration()?getTime()/getDuration()*100:0)+"%";
+ $("current").textContent=formatTime(getTime());
+ $("duration").textContent=formatTime(getDuration());
+}
+draw();
+
+function applySettings(){
+ $("songText").textContent=$("songInput").value||"UNTITLED";
+ $("artistText").textContent=$("artistInput").value||"";
+ $("copyText").textContent=$("copyInput").value||"";
+ $("watermark").textContent=$("channelInput").value||"";
+ const color=$("colorInput").value;
+ document.documentElement.style.setProperty("--gold",color);
+ $("ambient").style.background=color+"24";
+}
+$("apply").onclick=applySettings;
+
+$("imageInput").onchange=e=>{
+ const file=e.target.files[0];
+ if(!file)return;
+ if(imageURL)URL.revokeObjectURL(imageURL);
+ imageURL=URL.createObjectURL(file);
+ $("cover").src=imageURL;
+ $("backdrop").src=imageURL;
+};
+
+function setupAudioGraph(){
+ if(audioContext)return;
+ const AC=window.AudioContext||window.webkitAudioContext;
+ if(!AC)throw Error("Trình duyệt không hỗ trợ Web Audio.");
+ audioContext=new AC();
+ analyser=audioContext.createAnalyser();
+ analyser.fftSize=256;
+ const node=audioContext.createMediaElementSource(audio);
+ mediaSource=node;
+ node.connect(analyser);
+ analyser.connect(audioContext.destination);
+}
+
+$("mediaInput").onchange=async e=>{
+ const file=e.target.files[0];
+ if(!file)return;
+ if(mediaURL)URL.revokeObjectURL(mediaURL);
+ mediaURL=URL.createObjectURL(file);
+ const wasPlaying=playing;
+ audio.pause();video.pause();
+ if(file.type.startsWith("video/")){
+  sourceType="video";
+  video.src=mediaURL;
+  video.load();
+  video.onloadedmetadata=()=>{
+   $("exportStatus").textContent=
+    "Đã nạp video. Khi phát, hình ảnh video sẽ hiển thị trong khung xem trước.";
+  };
+ }else{
+  sourceType="audio";
+  audio.src=mediaURL;
+  audio.load();
+  $("exportStatus").textContent=
+   "Đã nạp âm thanh. Nhấn Phát để nghe và xem hiệu ứng.";
+ }
+ playing=false;
+ $("play").textContent="▶";
+ if(wasPlaying)playMedia();
+};
+
+async function playMedia(){
+ try{
+  const m=activeMedia();
+  if(sourceType==="audio"){
+   setupAudioGraph();
+   if(audioContext.state==="suspended")await audioContext.resume();
+  }
+  await m.play();
+  playing=true;
+  $("play").textContent="Ⅱ";
+ }catch(err){
+  $("exportStatus").textContent=
+   "Không thể phát tự động. Hãy thử nhấn nút Phát và kiểm tra định dạng file.";
+ }
+}
+function pauseMedia(){
+ activeMedia().pause();
+ playing=false;
+ $("play").textContent="▶";
+}
+$("play").onclick=()=>playing?pauseMedia():playMedia();
+$("restart").onclick=()=>{activeMedia().currentTime=0;playMedia()};
+$("back").onclick=()=>activeMedia().currentTime=Math.max(0,getTime()-10);
+$("forward").onclick=()=>{
+ const m=activeMedia();
+ m.currentTime=Math.min(getDuration()||Infinity,getTime()+10);
+};
+$("mute").onclick=()=>{
+ muted=!muted;
+ audio.muted=muted;video.muted=muted;
+ $("mute").textContent=muted?"🔇":"♫";
+};
+
+function drawCover(){
+ const w=canvas.width,h=canvas.height;
+ ctx.clearRect(0,0,w,h);
+ const count=64,gap=w/count,base=h*.92;
+ for(let i=0;i<count;i++){
+  const bh=h*(.15+.10*Math.sin(Date.now()/250+i*.65));
+  ctx.fillStyle=$("colorInput").value;
+  ctx.fillRect(i*gap+gap*.2,base-bh,gap*.6,bh);
+ }
+}
+
+function paintVideoFrame(){
+ const preview=$("preview");
+ const r=preview.getBoundingClientRect();
+ const w=recordingCanvas.width,h=recordingCanvas.height;
+ const scale=Math.min(w/r.width,h/r.height);
+ const dw=r.width*scale,dh=r.height*scale;
+ recordingCtx.clearRect(0,0,w,h);
+ recordingCtx.drawImage(previewCapture,0,0,w,h);
+}
+
+let recordingCanvas=document.createElement("canvas");
+recordingCanvas.width=1280;recordingCanvas.height=720;
+let recordingCtx=recordingCanvas.getContext("2d");
+let previewCapture=null;
+
+function renderRecordingFrame(){
+ if(!recording||recording.state!=="recording")return;
+ const preview=$("preview");
+ const rect=preview.getBoundingClientRect();
+ const scale=Math.min(1280/rect.width,720/rect.height);
+ const w=rect.width*scale,h=rect.height*scale;
+ recordingCtx.fillStyle="#030405";
+ recordingCtx.fillRect(0,0,1280,720);
+ recordingCtx.save();
+ recordingCtx.translate((1280-w)/2,(720-h)/2);
+ recordingCtx.scale(scale,scale);
+ recordingCtx.drawImage(preview,0,0,rect.width,rect.height);
+ recordingCtx.restore();
+ requestAnimationFrame(renderRecordingFrame);
+}
+
+$("record").onclick=async()=>{
+ if(!window.MediaRecorder||!recordingCanvas.captureStream){
+  $("exportStatus").textContent=
+   "Trình duyệt này chưa hỗ trợ xuất video. Hãy thử Chrome mới nhất.";
+  return;
+ }
+ try{
+  if(sourceType==="audio")setupAudioGraph();
+  if(sourceType==="audio"&&audioContext.state==="suspended")
+   await audioContext.resume();
+
+  const videoStream=recordingCanvas.captureStream(30);
+  const tracks=[...videoStream.getVideoTracks()];
+  if(sourceType==="audio"&&mediaSource){
+   const dest=audioContext.createMediaStreamDestination();
+   // Nhánh âm thanh riêng cho bản ghi
+   const recordNode=audioContext.createMediaStreamDestination();
+   // Âm thanh phải được kết nối từ nguồn gốc trước khi ghi.
+   // Tạo nhánh độc lập từ analyser.
+   analyser.connect(recordNode);
+   tracks.push(...recordNode.stream.getAudioTracks());
+   recordingStream=new MediaStream(tracks);
+   recordingStream._recordNode=recordNode;
+  }else if(sourceType==="video"){
+   // Video đầu vào được vẽ trong khung xem trước nhưng việc lấy âm thanh
+   // trực tiếp từ video có thể bị giới hạn tùy trình duyệt.
+   if(video.captureStream){
+    const vs=video.captureStream();
+    tracks.push(...vs.getAudioTracks());
+   }
+   recordingStream=new MediaStream(tracks);
+  }else{
+   recordingStream=new MediaStream(tracks);
+  }
+
+  const mimeTypes=[
+   "video/webm;codecs=vp9,opus",
+   "video/webm;codecs=vp8,opus",
+   "video/webm"
+  ];
+  const mime=mimeTypes.find(t=>MediaRecorder.isTypeSupported(t));
+  recording=new MediaRecorder(recordingStream,mime?{mimeType:mime}:{});
+  chunks=[];
+  recording.ondataavailable=e=>{
+   if(e.data&&e.data.size)chunks.push(e.data);
+  };
+  recording.onstop=()=>{
+   const type=recording.mimeType||"video/webm";
+   const blob=new Blob(chunks,{type});
+   const url=URL.createObjectURL(blob);
+   const a=document.createElement("a");
+   a.href=url;a.download="neon-music-video.webm";
+   a.click();
+   setTimeout(()=>URL.revokeObjectURL(url),60000);
+   $("exportStatus").textContent=
+    "Đã tạo video. Nếu điện thoại không phát được file, hãy chuyển WebM sang MP4 bằng công cụ chuyển đổi video.";
+   $("record").disabled=false;
+   $("stop").disabled=true;
+   if(recordingStream){
+    recordingStream.getTracks().forEach(t=>t.stop());
+    if(recordingStream._recordNode){
+     try{analyser.disconnect(recordingStream._recordNode)}catch(e){}
+    }
+   }
+  };
+  recording.start(500);
+  $("record").disabled=true;
+  $("stop").disabled=false;
+  $("exportStatus").textContent=
+   "Đang ghi video. Bấm Dừng và lưu video khi hoàn tất.";
+  renderRecordingFrame();
+ }catch(err){
+  $("exportStatus").textContent=
+   "Không thể xuất video: "+err.message+
+   ". Hãy thử trên Chrome và cho phép các tính năng cần thiết.";
+ }
+};
+$("stop").onclick=()=>{
+ if(recording&&recording.state==="recording")recording.stop();
+};
+
+$("reset").onclick=()=>{
+ $("songInput").value="WEAR HEADPHONES";
+ $("artistInput").value="VT Music ✦";
+ $("copyInput").value="THIS (SONG)";
+ $("channelInput").value="@YOUR_CHANNEL";
+ $("colorInput").value="#ffe500";
+ applySettings();
+};
+applySettings();
+$("backdrop").src=fallbackURL;
+$("cover").src=fallbackURL;
+$("clock").textContent="12:00 ◉ ♫";
+</script>
+</body>
+  </html>
